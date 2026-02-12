@@ -76,35 +76,41 @@ namespace RedeliAvad
             }
 
 
-            // 2) Link walls -> solids (transformed to host)
-            var walls = new FilteredElementCollector(linkDoc)
-                .OfCategory(BuiltInCategory.OST_Walls)
+            // 2) Link walls + structural framing -> solids (transformed to host)
+            var hostFilter = new LogicalOrFilter(
+                new ElementCategoryFilter(BuiltInCategory.OST_Walls),
+                new ElementCategoryFilter(BuiltInCategory.OST_StructuralFraming));
+
+            var hostElements = new FilteredElementCollector(linkDoc)
+                .WherePasses(hostFilter)
                 .WhereElementIsNotElementType()
                 .ToElements()
                 .ToList();
 
-            if (walls.Count == 0)
+            if (hostElements.Count == 0)
             {
                 // Fallback for quirky IFC categorization
-                walls = new FilteredElementCollector(linkDoc)
+                hostElements = new FilteredElementCollector(linkDoc)
                     .WhereElementIsNotElementType()
                     .ToElements()
-                    .Where(el => el.Category != null && el.Category.Id.IntegerValue == (int)BuiltInCategory.OST_Walls)
+                    .Where(el => el.Category != null &&
+                        (el.Category.Id.IntegerValue == (int)BuiltInCategory.OST_Walls ||
+                         el.Category.Id.IntegerValue == (int)BuiltInCategory.OST_StructuralFraming))
                     .ToList();
             }
 
-            var wallSolids = new List<Solid>();
-            foreach (var w in walls)
+            var hostSolids = new List<Solid>();
+            foreach (var w in hostElements)
             {
                 var s = GetMainSolid(w);
                 if (s == null || s.Volume <= 1e-9) continue;
                 var st = SolidUtils.CreateTransformed(s, linkToHost);
-                if (st != null && st.Volume > 1e-9) wallSolids.Add(st);
+                if (st != null && st.Volume > 1e-9) hostSolids.Add(st);
             }
 
-            if (wallSolids.Count == 0)
+            if (hostSolids.Count == 0)
             {
-                TaskDialog.Show("RedeliAvad", "No usable wall solids found in link.");
+                TaskDialog.Show("RedeliAvad", "No usable wall/framing solids found in link.");
                 return;
             }
 
@@ -131,16 +137,16 @@ namespace RedeliAvad
                     var trayWidth = GetDoubleParam(tray, "Width");
                     var trayHeight = GetDoubleParam(tray, "Height");
 
-                    foreach (var wallS in wallSolids)
+                    foreach (var hostS in hostSolids)
                     {
-                        var wallB = ComputeBoundingBox(wallS);
+                        var wallB = ComputeBoundingBox(hostS);
                         if (!BboxIntersects(trayB, wallB)) continue;
 
                         Solid intersect = null;
                         try
                         {
                             intersect = BooleanOperationsUtils.ExecuteBooleanOperation(
-                                traySolid, wallS, BooleanOperationsType.Intersect);
+                                traySolid, hostS, BooleanOperationsType.Intersect);
                         }
                         catch { /* robustly ignore */ }
 
