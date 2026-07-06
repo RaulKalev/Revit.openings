@@ -116,11 +116,23 @@
                         </ToggleButton.Template>
                     </ToggleButton>
                 </Grid>
-                <Grid Grid.Row="1" Margin="12" />
-                <!--  =====================  -->
-                <!--  MAIN CONTENT AREA  -->
-                <!--  =====================  -->
-                <Grid Grid.Row="1" Margin="10">
+                <!--  ==========================================================  -->
+                <!--  MAIN CONTENT: left column = classic controls,               -->
+                <!--  right column = Avade haldur panel (expands to the right)    -->
+                <!--  ==========================================================  -->
+                <Grid Grid.Row="1" Grid.RowSpan="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition x:Name="LeftColumn" Width="*" />
+                        <ColumnDefinition x:Name="ManagerColumn" Width="0" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -136,7 +148,7 @@
                         Grid.Row="0"
                         Grid.ColumnSpan="2"
                         Margin="0,0,0,0"
-                        Padding="5"
+                        Padding="8,6"
                         Background="{DynamicResource SecondaryBackgroundBrush}">
 
                         <Grid>
@@ -178,8 +190,9 @@
                                     Grid.Row="0"
                                     Grid.Column="1"
                                     MinWidth="200"
+                                    Margin="0,0,0,8"
                                     materialDesign:HintAssist.Hint="Select linked model containing walls"
-                                    Style="{StaticResource DarkThemeComboBox}" VerticalAlignment="Top" />
+                                    Style="{StaticResource DarkThemeComboBox}" />
 
                                 <!--  Family Type  -->
                                 <TextBlock
@@ -206,7 +219,7 @@
                         Grid.Row="2"
                         Grid.ColumnSpan="2"
                         Margin="0,10,0,0"
-                        Padding="5"
+                        Padding="8,6"
                         Background="{DynamicResource SecondaryBackgroundBrush}">
 
                         <Grid>
@@ -251,7 +264,7 @@
                                     Grid.Row="0"
                                     Style="{StaticResource CustomCheckBox}"
                                     Grid.ColumnSpan="2"
-                                    Margin="0,0,0,5"
+                                    Margin="0,0,0,8"
                                     FontSize="10"
                                     Content="Väldi duplikaatpaigutusi samas kohas"
                                     Foreground="{DynamicResource ForegroundBrush}"
@@ -270,8 +283,11 @@
                                     Grid.Row="1"
                                     Grid.Column="1"
                                     Width="100"
+                                    Height="24"
                                     Margin="0,0,0,8"
                                     HorizontalAlignment="Left"
+                                    VerticalContentAlignment="Center"
+                                    FontSize="12"
                                     Style="{StaticResource CustomTextBoxStyle}"
                                     Text="10" />
 
@@ -288,8 +304,11 @@
                                     Grid.Row="2"
                                     Grid.Column="1"
                                     Width="100"
+                                    Height="24"
                                     Margin="0,0,0,8"
                                     HorizontalAlignment="Left"
+                                    VerticalContentAlignment="Center"
+                                    FontSize="12"
                                     Style="{StaticResource CustomTextBoxStyle}"
                                     Text="50" />
 
@@ -306,8 +325,11 @@
                                     Grid.Row="3"
                                     Grid.Column="1"
                                     Width="100"
+                                    Height="24"
                                     Margin="0,0,0,8"
                                     HorizontalAlignment="Left"
+                                    VerticalContentAlignment="Center"
+                                    FontSize="12"
                                     Style="{StaticResource CustomTextBoxStyle}"
                                     Text="50" />
 
@@ -324,8 +346,11 @@
                                     Grid.Row="4"
                                     Grid.Column="1"
                                     Width="100"
+                                    Height="24"
                                     Margin="0,0,0,8"
                                     HorizontalAlignment="Left"
+                                    VerticalContentAlignment="Center"
+                                    FontSize="12"
                                     Style="{StaticResource CustomTextBoxStyle}"
                                     Text="50" />
 
@@ -338,7 +363,7 @@
 
                 <!--  Bottom Bar (grouped)  -->
                 <Grid
-                    Grid.Row="2"
+                    Grid.Row="1"
                     Margin="10,0,10,10"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top">
@@ -347,12 +372,12 @@
                         <!--  Placement (MaterialDesign Card)  -->
                         <materialDesign:Card
                             Margin="0,0,0,0"
-                            Padding="5"
+                            Padding="8,6"
                             Background="{DynamicResource SecondaryBackgroundBrush}">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="10" />
+                                    <RowDefinition Height="8" />
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
 
@@ -368,7 +393,7 @@
                                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
                                     <Button
                                         Width="140"
-                                        Height="36"
+                                        Height="30"
                                         Margin="0,5,10,0"
                                         HorizontalAlignment="Center"
                                         Click="Run_Click"
@@ -377,7 +402,7 @@
                                         Style="{StaticResource CustomActionButtonStyle}" />
                                     <Button
                                         Width="140"
-                                        Height="36"
+                                        Height="30"
                                         Margin="0,5,0,0"
                                         HorizontalAlignment="Center"
                                         Click="Run_Selected_Click"
@@ -393,12 +418,12 @@
                         <!--  Navigation (MaterialDesign Card)  -->
                         <materialDesign:Card
                             Margin="0,10,0,0"
-                            Padding="5"
+                            Padding="8,6"
                             Background="{DynamicResource SecondaryBackgroundBrush}">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="10" />
+                                    <RowDefinition Height="8" />
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
 
@@ -418,7 +443,7 @@
                                         Orientation="Horizontal">
                                         <Button
                                             Width="90"
-                                            Height="36"
+                                            Height="30"
                                             Margin="0"
                                             Click="Prev_Click"
                                             Content="Eelmine"
@@ -427,7 +452,7 @@
 
                                         <Button
                                             Width="90"
-                                            Height="36"
+                                            Height="30"
                                             Margin="10,0,0,0"
                                             Click="Next_Click"
                                             Content="Järgmine"
@@ -436,13 +461,26 @@
 
                                         <Button
                                             Width="90"
-                                            Height="36"
+                                            Height="30"
                                             Margin="10,0,0,0"
                                             Click="Clear_Click"
                                             Content="Tühjenda mälu"
                                             FontSize="12"
                                             Style="{StaticResource CustomActionButtonStyle}" />
                                     </StackPanel>
+
+                                    <!--  Opening Manager launcher  -->
+                                    <Button
+                                        x:Name="ManagerToggleButton"
+                                        Width="290"
+                                        Height="30"
+                                        Margin="0,10,0,0"
+                                        HorizontalAlignment="Center"
+                                        Click="OpenManager_Click"
+                                        Content="Avade haldur"
+                                        FontSize="12"
+                                        Style="{StaticResource CustomActionButtonStyle}"
+                                        ToolTip="Halda loodud avasid: valideeri, otsi, paranda, märgi lubatuks" />
                                 </StackPanel>
                             </Grid>
                         </materialDesign:Card>
@@ -450,10 +488,15 @@
 
                     </StackPanel>
                 </Grid>
+                    </Grid>
 
-
-
-
+                    <!--  Avade haldur (integrated panel, expands the window to the right)  -->
+                    <local:OpeningManagerPanel
+                        x:Name="ManagerPanel"
+                        Grid.Column="1"
+                        Margin="0,8,10,10"
+                        Visibility="Collapsed" />
+                </Grid>
             </Grid>
         </Border>
         <!--  Left Edge  -->

@@ -99,13 +99,15 @@ namespace RedeliAvad
                     .ToList();
             }
 
-            var hostSolids = new List<Solid>();
+            // Keep the host element identity together with its (transformed) solid so the
+            // opening ↔ host link can be persisted after placement.
+            var hostSolids = new List<(Element Host, Solid Solid)>();
             foreach (var w in hostElements)
             {
                 var s = GetMainSolid(w);
                 if (s == null || s.Volume <= 1e-9) continue;
                 var st = SolidUtils.CreateTransformed(s, linkToHost);
-                if (st != null && st.Volume > 1e-9) hostSolids.Add(st);
+                if (st != null && st.Volume > 1e-9) hostSolids.Add((w, st));
             }
 
             if (hostSolids.Count == 0)
@@ -137,7 +139,7 @@ namespace RedeliAvad
                     var trayWidth = GetDoubleParam(tray, "Width");
                     var trayHeight = GetDoubleParam(tray, "Height");
 
-                    foreach (var hostS in hostSolids)
+                    foreach (var (hostElem, hostS) in hostSolids)
                     {
                         var wallB = ComputeBoundingBox(hostS);
                         if (!BboxIntersects(trayB, wallB)) continue;
@@ -193,17 +195,26 @@ namespace RedeliAvad
                         // Depth  = wall thickness + 2 * ExtDepth
                         // Height = tray height + 2 * ExtHeight
                         // --------------------------
-                        if (!double.IsNaN(trayWidth))
-                            SetDoubleParam(fi, "Width", trayWidth + 2.0 * ExtWidth);
-                        else
-                            SetDoubleParam(fi, "Width", 2.0 * ExtWidth); // fallback
+                        double newWidth = (!double.IsNaN(trayWidth) ? trayWidth : 0.0) + 2.0 * ExtWidth;
+                        double newDepth = wallThickness + 2.0 * ExtDepth;
+                        double newHeight = (!double.IsNaN(trayHeight) ? trayHeight : 0.0) + 2.0 * ExtHeight;
 
-                        SetDoubleParam(fi, "Depth", wallThickness + 2.0 * ExtDepth);
+                        SetDoubleParam(fi, "Width", newWidth);
+                        SetDoubleParam(fi, "Depth", newDepth);
+                        SetDoubleParam(fi, "Height", newHeight);
 
-                        if (!double.IsNaN(trayHeight))
-                            SetDoubleParam(fi, "Height", trayHeight + 2.0 * ExtHeight);
-                        else
-                            SetDoubleParam(fi, "Height", 2.0 * ExtHeight);
+                        // NEW: persist opening ↔ source ↔ host relationship (Extensible Storage)
+                        // so the Opening Manager can validate/fix this opening later.
+                        try
+                        {
+                            OpeningLinkStorage.SaveNewLink(doc, fi, tray, hostElem, SelectedLink, pt,
+                                newWidth, newHeight, newDepth, ExtWidth, ExtHeight, ExtDepth);
+                        }
+                        catch (Exception ex)
+                        {
+                            OpeningManagerLog.Error("Failed to store opening link for " + fi.Id, ex);
+                        }
+
                         newlyPlaced.Add(fi.Id);
 
                         // Record placement to avoid duplicates later in this run and across runs

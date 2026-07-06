@@ -36,6 +36,16 @@ namespace RedeliAvad
         private PlaceIntersectionsHandler _handler;
         private ExternalEvent _placeEvent;
 
+        // NEW: Opening Manager panel state (expands the window to the right)
+        // The handler + event are created here, in the constructor's valid API context —
+        // ExternalEvent.Create may not be called later from a WPF button click.
+        private OpeningManagerHandler _managerHandler;
+        private ExternalEvent _managerEvent;
+        private bool _isManagerOpen;
+        private double _managerBaseWidth;
+        private const double ManagerPanelWidth = 780;
+        private const double LeftColumnFixedWidth = 346; // = default window width (350) minus 2×2 px border
+
         // Ensures we can gate logic during close if needed later
         private bool _isClosing = false;
         #endregion
@@ -76,6 +86,15 @@ namespace RedeliAvad
 
             _navHandler = new FocusNavigateHandler { UiDoc = _uiDoc };
             _navEvent = ExternalEvent.Create(_navHandler);
+
+            // NEW: Opening Manager external event (must be created here, in API context)
+            _managerHandler = new OpeningManagerHandler { UiDoc = _uiDoc };
+            _managerEvent = ExternalEvent.Create(_managerHandler);
+            ManagerPanel.Initialize(_uiDoc, _themeManager, _managerHandler, _managerEvent);
+            ManagerPanel.CloseRequested += (s, e) => CollapseManager();
+
+            // NEW: sync the theme toggle when the manager window switches themes
+            _themeManager.ThemeChanged += ThemeManager_ThemeChanged;
 
             DataContext = this;
         }
@@ -232,6 +251,10 @@ namespace RedeliAvad
         private void MainWindow_Closed(object sender, EventArgs e)
         {
             _isClosing = true;
+
+            // NEW: collapse the manager first so the saved window width is the base width.
+            try { CollapseManager(); } catch { }
+
             SaveUiSettingsToConfig();
             _themeManager.SaveConfig();
 
@@ -254,6 +277,13 @@ namespace RedeliAvad
             _themeManager.ToggleTheme();
             _themeManager.SaveConfig();
 
+            if (ThemeToggleButton != null)
+                ThemeToggleButton.IsChecked = _themeManager.IsDarkMode;
+        }
+
+        // NEW: keep the toggle in sync when the theme is switched from the manager window
+        private void ThemeManager_ThemeChanged(object sender, EventArgs e)
+        {
             if (ThemeToggleButton != null)
                 ThemeToggleButton.IsChecked = _themeManager.IsDarkMode;
         }
@@ -330,6 +360,58 @@ namespace RedeliAvad
             TempMemory.Clear();
             TaskDialog.Show("RedeliAvad", "Vahemälu tühjendatud.");
         }
+
+        // NEW: toggle the integrated Opening Manager panel (expands the window to the right)
+        private void OpenManager_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_isManagerOpen) CollapseManager();
+                else ExpandManager();
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("RedeliAvad", "Avade halduri avamine ebaõnnestus:\n" + ex.Message);
+            }
+        }
+
+        private void ExpandManager()
+        {
+            if (_isManagerOpen) return;
+
+            _managerBaseWidth = Width;
+
+            // Left column keeps its designed width; the manager takes the rest.
+            LeftColumn.Width = new GridLength(LeftColumnFixedWidth);
+            ManagerColumn.Width = new GridLength(1, GridUnitType.Star);
+            ManagerPanel.Visibility = System.Windows.Visibility.Visible;
+
+            MinWidth = LeftColumnFixedWidth + 704; // manager needs ~700 px to fit its columns
+            Width = _managerBaseWidth + ManagerPanelWidth;
+
+            // Keep the window on-screen when it grows to the right.
+            var virtualRight = SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth;
+            if (Left + Width > virtualRight)
+                Left = Math.Max(SystemParameters.VirtualScreenLeft, virtualRight - Width);
+
+            ManagerPanel.Activate();
+            _isManagerOpen = true;
+        }
+
+        private void CollapseManager()
+        {
+            if (!_isManagerOpen) return;
+
+            ManagerPanel.Deactivate();
+            ManagerPanel.Visibility = System.Windows.Visibility.Collapsed;
+            ManagerColumn.Width = new GridLength(0);
+            LeftColumn.Width = new GridLength(1, GridUnitType.Star);
+
+            MinWidth = 350;
+            Width = _managerBaseWidth > 0 ? _managerBaseWidth : 350;
+            _isManagerOpen = false;
+        }
+
         private void Run_Selected_Click(object sender, RoutedEventArgs e)
         {
             var doc = _doc ?? _uiDoc?.Document;
