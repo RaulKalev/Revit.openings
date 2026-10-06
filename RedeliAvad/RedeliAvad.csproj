@@ -6,7 +6,6 @@
 		<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
 		<Configuration>Release</Configuration>
-		<BaseOutputPath>$(UserProfile)\Desktop\DevDlls\$(MSBuildProjectName)\</BaseOutputPath>
 	</PropertyGroup>
 	<ItemGroup>
 		<EmbeddedResource Include="Resources\RedeliAvad.tiff" />
