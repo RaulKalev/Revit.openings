@@ -85,3 +85,6 @@ Desktop.ini
 $RECYCLE.BIN/
 *.lnk
 .DS_Store
+
+## Local build drops
+dist/
