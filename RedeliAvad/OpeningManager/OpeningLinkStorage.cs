@@ -423,10 +423,10 @@ namespace RedeliAvad
                 Version = CurrentSchemaVersion,
 
                 OpeningUniqueId = opening.UniqueId,
-                OpeningElementIdValue = opening.Id.IntegerValue,
+                OpeningElementIdValue = opening.Id.GetIdValueAsInt(),
 
                 SourceElementUniqueId = source.UniqueId,
-                SourceElementIdValue = source.Id.IntegerValue,
+                SourceElementIdValue = source.Id.GetIdValueAsInt(),
                 SourceCategory = source.Category != null ? source.Category.Name : "",
                 SourceName = source.Name ?? "",
                 SourceDocumentTitle = doc.Title ?? "",
@@ -434,7 +434,7 @@ namespace RedeliAvad
                 SourceLinkInstanceUniqueId = "", // source (cable tray) lives in the current model
 
                 HostElementUniqueId = host.UniqueId,
-                HostElementIdValue = host.Id.IntegerValue,
+                HostElementIdValue = host.Id.GetIdValueAsInt(),
                 HostCategory = host.Category != null ? host.Category.Name : "",
                 HostName = host.Name ?? "",
                 HostDocumentTitle = linkDoc != null ? (linkDoc.Title ?? "") : (doc.Title ?? ""),

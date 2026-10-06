@@ -132,7 +132,7 @@ namespace RedeliAvad
         {
             get
             {
-                var idText = OpeningElementId != null ? OpeningElementId.IntegerValue.ToString() : "";
+                var idText = OpeningElementId != null ? OpeningElementId.GetIdValue().ToString() : "";
                 return (idText + " " + SourceDisplayName + " " + SourceCategory + " " + SourceTypeName + " " +
                         SourceModelName + " " + HostDisplayName + " " + HostCategory + " " + HostModelName + " " +
                         OpeningFamilyName + " " + OpeningTypeName + " " + LevelName + " " + StatusText + " " +

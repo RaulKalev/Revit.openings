@@ -41,9 +41,8 @@ namespace RedeliAvad
             {
                 trayElems = SelectedTrayIds
                     .Select(id => doc.GetElement(id))
-                    .Where(e => e != null && e.Category != null &&
-                        (e.Category.Id.IntegerValue == (int)BuiltInCategory.OST_CableTray ||
-                         e.Category.Id.IntegerValue == (int)BuiltInCategory.OST_CableTrayFitting));
+                    .Where(e => e.IsCategory(BuiltInCategory.OST_CableTray) ||
+                                e.IsCategory(BuiltInCategory.OST_CableTrayFitting));
             }
             else
             {
@@ -93,9 +92,8 @@ namespace RedeliAvad
                 hostElements = new FilteredElementCollector(linkDoc)
                     .WhereElementIsNotElementType()
                     .ToElements()
-                    .Where(el => el.Category != null &&
-                        (el.Category.Id.IntegerValue == (int)BuiltInCategory.OST_Walls ||
-                         el.Category.Id.IntegerValue == (int)BuiltInCategory.OST_StructuralFraming))
+                    .Where(el => el.IsCategory(BuiltInCategory.OST_Walls) ||
+                                 el.IsCategory(BuiltInCategory.OST_StructuralFraming))
                     .ToList();
             }
 

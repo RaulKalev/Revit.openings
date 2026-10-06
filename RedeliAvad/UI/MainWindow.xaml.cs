@@ -441,9 +441,8 @@ namespace RedeliAvad
             // Filter selection to trays + fittings only
             var filtered = selIds
                 .Select(id => doc.GetElement(id))
-                .Where(el => el != null && el.Category != null &&
-                    (el.Category.Id.IntegerValue == (int)BuiltInCategory.OST_CableTray ||
-                     el.Category.Id.IntegerValue == (int)BuiltInCategory.OST_CableTrayFitting))
+                .Where(el => el.IsCategory(BuiltInCategory.OST_CableTray) ||
+                             el.IsCategory(BuiltInCategory.OST_CableTrayFitting))
                 .Select(el => el.Id)
                 .ToList();
 
