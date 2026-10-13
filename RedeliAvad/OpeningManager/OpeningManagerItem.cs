@@ -56,7 +56,7 @@ namespace RedeliAvad
             set
             {
                 _status = value;
-                Raise("Status"); Raise("StatusText"); Raise("StatusColor"); Raise("StatusSeverity");
+                Raise("Status"); Raise("StatusText"); Raise("StatusSeverity");
             }
         }
 
@@ -65,7 +65,6 @@ namespace RedeliAvad
             : OpeningStatusInfo.GetText(_status);
 
         public OpeningStatusSeverity StatusSeverity => OpeningStatusInfo.GetSeverity(_status);
-        public string StatusColor => OpeningStatusInfo.GetColorHex(_status);
 
         private bool _isDirty;
         /// <summary>Set by the DocumentChanged listener; cleared by the next validation run.</summary>

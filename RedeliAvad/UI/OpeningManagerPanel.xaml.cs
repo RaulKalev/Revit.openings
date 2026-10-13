@@ -11,9 +11,9 @@ using System.Windows.Media;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
-using WpfColor = System.Windows.Media.Color;
+using MaterialDesignThemes.Wpf;
+using Shape = System.Windows.Shapes.Shape;
 using WpfEllipse = System.Windows.Shapes.Ellipse;
-using WpfPanel = System.Windows.Controls.Panel;
 using WpfRectangle = System.Windows.Shapes.Rectangle;
 
 namespace RedeliAvad
@@ -46,14 +46,27 @@ namespace RedeliAvad
         {
             InitializeComponent();
 
-            // The merged dictionaries were only needed for parse-time StaticResource lookups.
-            // Clearing them lets DynamicResource resolve against the window's active theme
-            // (same trick ThemeManager uses on the main window).
-            Resources.MergedDictionaries.Clear();
-
             ItemsGrid.ItemsSource = _items;
             _view = CollectionViewSource.GetDefaultView(_items);
             _view.Filter = FilterPredicate;
+            PreviewKeyDown += OnPreviewKeyDown;
+            UpdateSummary();
+            UpdateDetails(null);
+        }
+
+        private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F5 && ValidateButton.IsEnabled)
+            {
+                RequestRefresh();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                SearchBox.Focus();
+                SearchBox.SelectAll();
+                e.Handled = true;
+            }
         }
 
         #region Lifecycle (driven by MainWindow)
@@ -126,6 +139,7 @@ namespace RedeliAvad
                 _view.Refresh();
                 UpdateSummary();
                 UpdateDetails(ItemsGrid.SelectedItem as OpeningManagerItem);
+                UpdateFixSelected();
             }));
         }
 
@@ -142,9 +156,7 @@ namespace RedeliAvad
         {
             if (StatusMessageText == null) return;
             StatusMessageText.Text = text ?? "";
-            StatusMessageText.Foreground = isError
-                ? new SolidColorBrush((WpfColor)ColorConverter.ConvertFromString("#DC6B6B"))
-                : (TryFindResource("IconForegroundBrush") as Brush ?? StatusMessageText.Foreground);
+            StatusMessageText.SetResourceReference(TextBlock.ForegroundProperty, isError ? "Status.Error" : "Text.Secondary");
         }
 
         private void Validate_Click(object sender, RoutedEventArgs e) => RequestRefresh();
@@ -157,35 +169,25 @@ namespace RedeliAvad
             UpdateSummary();
         }
 
-        private void Chip_Click(object sender, RoutedEventArgs e)
+        private void Chip_Checked(object sender, RoutedEventArgs e)
         {
-            var chip = sender as System.Windows.Controls.Primitives.ToggleButton;
-            if (chip == null) return;
-
-            var panel = chip.Parent as WpfPanel;
-            if (panel != null)
-            {
-                foreach (var child in panel.Children)
-                {
-                    var other = child as System.Windows.Controls.Primitives.ToggleButton;
-                    if (other != null && !ReferenceEquals(other, chip))
-                        other.IsChecked = false;
-                }
-            }
-
-            if (chip.IsChecked != true)
-            {
-                // Un-checking the active chip falls back to "Kõik".
-                if (ChipAll != null) ChipAll.IsChecked = true;
-                _activeChip = "All";
-            }
-            else
-            {
-                _activeChip = chip.Tag as string ?? "All";
-            }
-
-            _view?.Refresh();
+            var chip = sender as FrameworkElement;
+            _activeChip = chip?.Tag as string ?? "All";
+            if (_view == null) return; // initial IsChecked during InitializeComponent
+            _view.Refresh();
             UpdateSummary();
+        }
+
+        private void EmptyAction_Click(object sender, RoutedEventArgs e)
+        {
+            if (_items.Count == 0)
+            {
+                RequestRefresh();
+                return;
+            }
+            // No matches: clear the search and the filter.
+            SearchBox.Text = "";
+            ChipAll.IsChecked = true;
         }
 
         private bool FilterPredicate(object obj)
@@ -220,9 +222,13 @@ namespace RedeliAvad
         {
             if (SummaryText == null) return;
             var total = _items.Count;
+            var shown = _view != null ? _view.Cast<object>().Count() : total;
+
             if (total == 0)
             {
-                SummaryText.Text = "Hallatavaid avasid ei leitud. Loo avad vasakult paneelilt või vajuta „Valideeri“.";
+                SummaryText.Text = "Hallatavaid avasid pole laaditud.";
+                ShowEmptyState(PackIconKind.TableSearch, "Avasid pole laaditud",
+                    "Vajuta „Valideeri“, et mudel läbi vaadata. Avad luuakse vasakult paneelilt.", "Valideeri");
                 return;
             }
 
@@ -230,10 +236,28 @@ namespace RedeliAvad
             var allowed = _items.Count(i => i.Status == OpeningStatus.Allowed);
             var warn = _items.Count(i => i.StatusSeverity == OpeningStatusSeverity.Warning);
             var err = _items.Count(i => i.StatusSeverity == OpeningStatusSeverity.Error);
-            var shown = _view != null ? _view.Cast<object>().Count() : total;
 
-            SummaryText.Text = total + " ava • " + aligned + " joondatud • " + warn + " hoiatust • " +
-                               err + " viga • " + allowed + " lubatud • kuvatud " + shown;
+            var parts = new List<string> { total + " ava", aligned + " joondatud" };
+            if (warn > 0) parts.Add(warn + " hoiatust");
+            if (err > 0) parts.Add(err + " viga");
+            if (allowed > 0) parts.Add(allowed + " lubatud");
+            if (shown != total) parts.Add("kuvatud " + shown);
+            SummaryText.Text = string.Join(" · ", parts);
+
+            if (shown == 0)
+                ShowEmptyState(PackIconKind.FilterOffOutline, "Sobivaid avasid pole",
+                    "Ükski ava ei vasta otsingule või filtrile.", "Tühjenda filter");
+            else
+                EmptyState.Visibility = System.Windows.Visibility.Collapsed;
+        }
+
+        private void ShowEmptyState(PackIconKind icon, string title, string message, string action)
+        {
+            EmptyIcon.Kind = icon;
+            EmptyTitle.Text = title;
+            EmptyMessage.Text = message;
+            EmptyAction.Content = action;
+            EmptyState.Visibility = System.Windows.Visibility.Visible;
         }
         #endregion
 
@@ -252,12 +276,34 @@ namespace RedeliAvad
             _event.Raise();
         }
 
-        private MessageBoxResult Confirm(string text, string caption, MessageBoxImage icon)
+        /// <summary>Asks in a sheet of the hosting window (falls back to a message box outside it).</summary>
+        private void Confirm(string title, string message, string yesText, bool destructive, Action onYes)
         {
-            var owner = Window.GetWindow(this);
-            return owner != null
-                ? MessageBox.Show(owner, text, caption, MessageBoxButton.YesNo, icon)
-                : MessageBox.Show(text, caption, MessageBoxButton.YesNo, icon);
+            var host = Window.GetWindow(this) as ISheetPresenter;
+            if (host == null)
+            {
+                if (MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes) onYes();
+                return;
+            }
+            host.ShowSheet(new SheetRequest
+            {
+                Title = title,
+                Message = message,
+                PrimaryText = yesText,
+                SecondaryText = "Loobu",
+                IsDestructive = destructive,
+                Completed = (ok, _) => { if (ok) onYes(); }
+            });
+        }
+
+        /// <summary>"…" button: opens its menu below it (the menu shares the row's DataContext).</summary>
+        private void More_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            if (button?.ContextMenu == null) return;
+            button.ContextMenu.PlacementTarget = button;
+            button.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            button.ContextMenu.IsOpen = true;
         }
 
         private void GoTo_Click(object sender, RoutedEventArgs e) =>
@@ -291,12 +337,13 @@ namespace RedeliAvad
             var item = ItemFromSender(sender);
             if (item == null || !item.CanFix) return;
 
-            var msg = BuildFixDescription(item);
-            if (Confirm(msg, "Paranda ava", MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-
-            _handler.FixPayloads = new List<OpeningFixPayload> { BuildFixPayload(item) };
-            _handler.Request = OpeningManagerRequest.FixItems;
-            _event.Raise();
+            Confirm(item.IsRecreate ? "Taasloo ava?" : "Paranda ava?", BuildFixDescription(item),
+                item.IsRecreate ? "Taasloo" : "Paranda", false, () =>
+                {
+                    _handler.FixPayloads = new List<OpeningFixPayload> { BuildFixPayload(item) };
+                    _handler.Request = OpeningManagerRequest.FixItems;
+                    _event.Raise();
+                });
         }
 
         private void FixSelected_Click(object sender, RoutedEventArgs e)
@@ -312,17 +359,17 @@ namespace RedeliAvad
             var resizes = fixable.Count(i => i.NeedsResize && !i.IsRecreate);
             var recreates = fixable.Count(i => i.IsRecreate);
 
-            var summary = "Parandatakse " + fixable.Count + " ava:\n";
-            if (moves > 0) summary += "  • " + moves + " nihutatakse õigesse asukohta\n";
-            if (resizes > 0) summary += "  • " + resizes + " suurus uuendatakse\n";
-            if (recreates > 0) summary += "  • " + recreates + " taasluuakse (kustutatud avad)\n";
-            summary += "\nKas jätkata?";
+            var lines = new List<string>();
+            if (moves > 0) lines.Add("• " + moves + " nihutatakse õigesse asukohta");
+            if (resizes > 0) lines.Add("• " + resizes + " suurus uuendatakse");
+            if (recreates > 0) lines.Add("• " + recreates + " taasluuakse (kustutatud avad)");
 
-            if (Confirm(summary, "Paranda valitud", MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-
-            _handler.FixPayloads = fixable.Select(BuildFixPayload).ToList();
-            _handler.Request = OpeningManagerRequest.FixItems;
-            _event.Raise();
+            Confirm("Paranda " + fixable.Count + " ava?", string.Join("\n", lines), "Paranda", false, () =>
+            {
+                _handler.FixPayloads = fixable.Select(BuildFixPayload).ToList();
+                _handler.Request = OpeningManagerRequest.FixItems;
+                _event.Raise();
+            });
         }
 
         private static string BuildFixDescription(OpeningManagerItem item)
@@ -382,14 +429,27 @@ namespace RedeliAvad
                 return;
             }
 
-            var dlg = new AllowReasonDialog(_themeManager == null || _themeManager.IsDarkMode)
+            var host = Window.GetWindow(this) as ISheetPresenter;
+            if (host == null)
             {
-                Owner = Window.GetWindow(this)
-            };
-            if (dlg.ShowDialog() != true) return;
-
-            _handler.AllowReason = dlg.Reason;
-            RaiseItemRequest(item, OpeningManagerRequest.MarkAllowed);
+                _handler.AllowReason = "";
+                RaiseItemRequest(item, OpeningManagerRequest.MarkAllowed);
+                return;
+            }
+            host.ShowSheet(new SheetRequest
+            {
+                Title = "Märgi ava lubatuks?",
+                Message = "Lubatud ava jäetakse valideerimisel vahele, kuni märge eemaldatakse.",
+                InputLabel = "Põhjus (valikuline)",
+                PrimaryText = "Märgi lubatuks",
+                SecondaryText = "Loobu",
+                Completed = (ok, reason) =>
+                {
+                    if (!ok) return;
+                    _handler.AllowReason = reason ?? "";
+                    RaiseItemRequest(item, OpeningManagerRequest.MarkAllowed);
+                }
+            });
         }
 
         private void ClearAllowed_Click(object sender, RoutedEventArgs e) =>
@@ -400,10 +460,8 @@ namespace RedeliAvad
             var item = ItemFromSender(sender);
             if (item == null) return;
 
-            if (Confirm("Eemalda seos? Ava jääb mudelisse alles, kuid haldur seda enam ei jälgi.",
-                    "Eemalda seos", MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-
-            RaiseItemRequest(item, OpeningManagerRequest.Unlink);
+            Confirm("Eemalda seos?", "Ava jääb mudelisse alles, kuid haldur seda enam ei jälgi.", "Eemalda seos", false,
+                () => RaiseItemRequest(item, OpeningManagerRequest.Unlink));
         }
 
         private void DeleteOpening_Click(object sender, RoutedEventArgs e)
@@ -411,10 +469,8 @@ namespace RedeliAvad
             var item = ItemFromSender(sender);
             if (item == null) return;
 
-            if (Confirm("Kustuta ava mudelist?\n\nAllikas: " + item.SourceDisplayName + "\nAlus: " + item.HostDisplayName,
-                    "Kustuta ava", MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-
-            RaiseItemRequest(item, OpeningManagerRequest.DeleteOpening);
+            Confirm("Kustuta ava mudelist?", "Allikas: " + item.SourceDisplayName + "\nAlus: " + item.HostDisplayName,
+                "Kustuta", true, () => RaiseItemRequest(item, OpeningManagerRequest.DeleteOpening));
         }
         #endregion
 
@@ -422,41 +478,52 @@ namespace RedeliAvad
         private void ItemsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             UpdateDetails(ItemsGrid.SelectedItem as OpeningManagerItem);
+            UpdateFixSelected();
+        }
+
+        /// <summary>Bulk fix is available (and says how many) only when the selection has fixable rows.</summary>
+        private void UpdateFixSelected()
+        {
+            var fixable = ItemsGrid.SelectedItems.Cast<OpeningManagerItem>().Count(i => i.CanFix);
+            FixSelectedButton.IsEnabled = fixable > 0;
+            FixSelectedText.Text = fixable > 1 ? "Paranda " + fixable + " ava" : "Paranda valitud";
         }
 
         private void UpdateDetails(OpeningManagerItem item)
         {
-            if (DetailLine1 == null) return;
+            if (DetailSource == null) return;
 
-            if (item == null)
+            var has = item != null;
+            DetailsGrid.Visibility = has ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+            DetailsPlaceholder.Visibility = has ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
+            PreviewBox.Visibility = DetailsGrid.Visibility;
+            if (!has)
             {
-                DetailLine1.Text = "–";
-                DetailLine2.Text = "";
-                DetailLine3.Text = "";
-                DetailLine4.Text = "";
-                DetailNotes.Text = "–";
                 DrawPreview(null);
                 return;
             }
 
-            DetailLine1.Text = "Allikas: " + item.SourceText +
-                               (string.IsNullOrEmpty(item.SourceModelName) ? "" : " (" + item.SourceModelName + ")");
-            DetailLine2.Text = "Alus: " + item.HostDisplayName +
-                               (string.IsNullOrEmpty(item.HostModelName) ? "" : " (" + item.HostModelName + ")");
-            DetailLine3.Text = "Ava: " + item.OpeningFamilyName + " : " + item.OpeningTypeName +
-                               " • " + item.SizeText + " mm • sügavus " + item.DepthMm.ToString("0") + " mm";
+            DetailSource.Text = item.SourceText +
+                                (string.IsNullOrEmpty(item.SourceModelName) ? "" : " · " + item.SourceModelName);
+            DetailHost.Text = item.HostDisplayName +
+                              (string.IsNullOrEmpty(item.HostModelName) ? "" : " · " + item.HostModelName);
+            DetailOpening.Text = item.OpeningFamilyName + " : " + item.OpeningTypeName +
+                                 " · " + item.SizeText + " mm · sügavus " + item.DepthMm.ToString("0") + " mm";
 
             var validated = "";
             DateTime utc;
             if (DateTime.TryParse(item.LastValidated, null, System.Globalization.DateTimeStyles.RoundtripKind, out utc))
-                validated = " • valideeritud " + utc.ToLocalTime().ToString("dd.MM.yyyy HH:mm");
-            DetailLine4.Text = "Staatus: " + item.StatusText + " • nihe " + item.OffsetText +
-                               " • varu " + item.ClearanceMm.ToString("0") + " mm" + validated;
+                validated = " · valideeritud " + utc.ToLocalTime().ToString("dd.MM.yyyy HH:mm");
+            DetailStatus.Text = item.StatusText + " · nihe " + item.OffsetText +
+                                " · varu " + item.ClearanceMm.ToString("0") + " mm" + validated;
 
             var notes = item.NotesText;
             if (item.IsAllowed && !string.IsNullOrEmpty(item.AllowedBy))
                 notes = (string.IsNullOrEmpty(notes) ? "" : notes + "\n") + "Lubas: " + item.AllowedBy;
-            DetailNotes.Text = string.IsNullOrEmpty(notes) ? "–" : notes;
+            var hasNotes = !string.IsNullOrEmpty(notes);
+            DetailNotes.Text = notes ?? "";
+            DetailNotes.Visibility = hasNotes ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+            DetailNotesLabel.Visibility = DetailNotes.Visibility;
 
             DrawPreview(item);
         }
@@ -471,23 +538,21 @@ namespace RedeliAvad
             PreviewCanvas.Children.Clear();
             if (item == null) return;
 
-            double cw = 208, ch = 102;
+            double cw = 208, ch = 108;
             double cx = cw / 2.0, cy = ch / 2.0;
 
-            var borderBrush = TryFindResource("BorderBrush") as Brush ?? Brushes.Gray;
-            var fgBrush = TryFindResource("IconForegroundBrush") as Brush ?? Brushes.Gray;
-            var statusBrush = new SolidColorBrush((WpfColor)ColorConverter.ConvertFromString(item.StatusColor));
+            var statusKey = StatusBrushKey(item);
 
             // Host band (wall/floor section)
             var host = new WpfRectangle
             {
                 Width = cw - 16,
                 Height = 34,
-                Fill = borderBrush,
-                Opacity = 0.35,
+                Opacity = 0.6,
                 RadiusX = 2,
                 RadiusY = 2
             };
+            host.SetResourceReference(Shape.FillProperty, "Surface.Stroke");
             Canvas.SetLeft(host, 8);
             Canvas.SetTop(host, cy - 17);
             PreviewCanvas.Children.Add(host);
@@ -522,11 +587,11 @@ namespace RedeliAvad
                 {
                     Width = rw,
                     Height = rh,
-                    Stroke = fgBrush,
                     StrokeThickness = 1,
                     StrokeDashArray = new DoubleCollection { 3, 2 },
                     Fill = Brushes.Transparent
                 };
+                expected.SetResourceReference(Shape.StrokeProperty, "Text.Tertiary");
                 Canvas.SetLeft(expected, cx - rw / 2.0);
                 Canvas.SetTop(expected, cy - rh / 2.0);
                 PreviewCanvas.Children.Add(expected);
@@ -539,16 +604,17 @@ namespace RedeliAvad
                 {
                     Width = rw,
                     Height = rh,
-                    Stroke = statusBrush,
                     StrokeThickness = 1.6,
                     Fill = Brushes.Transparent
                 };
+                current.SetResourceReference(Shape.StrokeProperty, statusKey);
                 Canvas.SetLeft(current, cx - rw / 2.0 + dx);
                 Canvas.SetTop(current, cy - rh / 2.0 + dy);
                 PreviewCanvas.Children.Add(current);
 
                 // Center dot
-                var dot = new WpfEllipse { Width = 4, Height = 4, Fill = statusBrush };
+                var dot = new WpfEllipse { Width = 4, Height = 4 };
+                dot.SetResourceReference(Shape.FillProperty, statusKey);
                 Canvas.SetLeft(dot, cx - 2 + dx);
                 Canvas.SetTop(dot, cy - 2 + dy);
                 PreviewCanvas.Children.Add(dot);
@@ -560,12 +626,24 @@ namespace RedeliAvad
                 Text = item.Status == OpeningStatus.MissingOpening
                     ? "Ava puudub"
                     : "Nihe: " + item.OffsetText,
-                FontSize = 10,
-                Foreground = fgBrush
+                FontSize = 11
             };
+            label.SetResourceReference(TextBlock.ForegroundProperty, "Text.Secondary");
             Canvas.SetLeft(label, 8);
-            Canvas.SetTop(label, ch - 16);
+            Canvas.SetTop(label, ch - 18);
             PreviewCanvas.Children.Add(label);
+        }
+
+        private static string StatusBrushKey(OpeningManagerItem item)
+        {
+            if (item.IsDirty) return "Status.Warning";
+            switch (item.StatusSeverity)
+            {
+                case OpeningStatusSeverity.Ok: return "Status.Ok";
+                case OpeningStatusSeverity.Info: return "Status.Info";
+                case OpeningStatusSeverity.Warning: return "Status.Warning";
+                default: return "Status.Error";
+            }
         }
         #endregion
 

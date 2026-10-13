@@ -6,131 +6,45 @@
     xmlns:local="clr-namespace:RedeliAvad"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    d:DesignHeight="560"
+    d:DesignHeight="600"
     d:DesignWidth="780"
     mc:Ignorable="d">
     <UserControl.Resources>
         <ResourceDictionary>
-            <!--  Parse-time only; cleared in code-behind so DynamicResource follows the window theme  -->
+            <!--  Styles only (shared instance); colours resolve against the window's active palette  -->
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.ComboBox.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Dark.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/RedeliAvad;component/UI/Themes/ElementStyles.xaml" />
+                <local:SharedDictionary Source="pack://application:,,,/RedeliAvad;component/UI/Themes/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <BooleanToVisibilityConverter x:Key="BoolToVis" />
-
-            <!--  Filter chip (matches CustomActionButtonStyle language, pill shaped)  -->
-            <Style x:Key="FilterChipStyle" TargetType="{x:Type ToggleButton}">
-                <Setter Property="Height" Value="24" />
-                <Setter Property="Margin" Value="0,0,6,4" />
-                <Setter Property="Padding" Value="10,0" />
-                <Setter Property="FontSize" Value="11" />
-                <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
-                <Setter Property="Background" Value="{DynamicResource SecondaryBackgroundBrush}" />
-                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-                <Setter Property="Cursor" Value="Hand" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="{x:Type ToggleButton}">
-                            <Border
-                                x:Name="ChipBorder"
-                                Padding="{TemplateBinding Padding}"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="12">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="ChipBorder" Property="BorderBrush" Value="{DynamicResource IconHoverBrush}" />
-                                </Trigger>
-                                <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="ChipBorder" Property="Background" Value="{DynamicResource HighlightBrush}" />
-                                    <Setter TargetName="ChipBorder" Property="BorderBrush" Value="{DynamicResource IconHoverBrush}" />
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
+            <!--  Two-line cell: primary value + tertiary caption  -->
+            <Style x:Key="CellPrimary" TargetType="{x:Type TextBlock}">
+                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
             </Style>
-
-            <!--  Small icon button used inside grid rows  -->
-            <Style x:Key="RowIconButtonStyle" TargetType="{x:Type Button}">
-                <Setter Property="Width" Value="22" />
-                <Setter Property="Height" Value="22" />
-                <Setter Property="Margin" Value="1,0" />
-                <Setter Property="Background" Value="Transparent" />
-                <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="Cursor" Value="Hand" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="{x:Type Button}">
-                            <Border
-                                x:Name="IconBg"
-                                Background="Transparent"
-                                CornerRadius="4">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="IconBg" Property="Background" Value="{DynamicResource HighlightBrush}" />
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Opacity" Value="0.3" />
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
+            <Style x:Key="CellCaption" TargetType="{x:Type TextBlock}">
+                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                <Setter Property="FontSize" Value="{StaticResource FontSize.Caption}" />
+                <Setter Property="Foreground" Value="{DynamicResource Text.Tertiary}" />
             </Style>
-
-            <!--  DataGrid row/cell theming (keeps the plugin's flat look, clear selection accent)  -->
-            <Style x:Key="ManagerRowStyle" TargetType="{x:Type DataGridRow}">
-                <Setter Property="Background" Value="Transparent" />
-                <Setter Property="MinHeight" Value="30" />
-                <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="{DynamicResource HighlightBrush}" />
-                    </Trigger>
-                    <!--  Selected row: theme accent (dark: #0078D7, light: #CDEAFF)  -->
-                    <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="{DynamicResource TextHighlightBrush}" />
-                    </Trigger>
-                </Style.Triggers>
+            <Style x:Key="DetailLabel" BasedOn="{StaticResource Type.Label}" TargetType="{x:Type TextBlock}">
+                <Setter Property="Margin" Value="0,0,12,6" />
+                <Setter Property="VerticalAlignment" Value="Top" />
             </Style>
-            <Style x:Key="ManagerCellStyle" TargetType="{x:Type DataGridCell}">
-                <Setter Property="Background" Value="Transparent" />
-                <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
-                <Setter Property="Padding" Value="4,0" />
-                <Setter Property="VerticalAlignment" Value="Center" />
-                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="{x:Type DataGridCell}">
-                            <Border
-                                Padding="{TemplateBinding Padding}"
-                                Background="{TemplateBinding Background}"
-                                BorderThickness="0">
-                                <ContentPresenter VerticalAlignment="Center" />
-                            </Border>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-                <Style.Triggers>
-                    <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="Transparent" />
-                        <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
-                    </Trigger>
-                </Style.Triggers>
+            <Style x:Key="DetailValue" TargetType="{x:Type TextBlock}">
+                <Setter Property="Margin" Value="0,0,0,6" />
+                <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+            <Style x:Key="MenuIcon" TargetType="{x:Type materialDesign:PackIcon}">
+                <Setter Property="Width" Value="16" />
+                <Setter Property="Height" Value="16" />
             </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid>
+    <Grid Margin="16,4,16,14">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -138,515 +52,460 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!--  Panel header  -->
-        <Grid Grid.Row="0" Margin="2,0,0,6">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock
-                VerticalAlignment="Center"
-                FontSize="14"
-                FontWeight="Bold"
-                Foreground="{DynamicResource ForegroundBrush}"
-                Text="Avade haldur" />
+        <!--  Header: title, validate, close  -->
+        <DockPanel Margin="0,8,0,12">
             <Button
-                Grid.Column="1"
+                Margin="8,0,0,0"
+                AutomationProperties.Name="Close opening manager"
                 Click="ClosePanel_Click"
-                Style="{StaticResource RowIconButtonStyle}"
+                DockPanel.Dock="Right"
+                Style="{StaticResource Button.Icon}"
                 ToolTip="Sulge haldur">
                 <materialDesign:PackIcon
-                    Width="18"
-                    Height="18"
-                    Foreground="{DynamicResource IconBrush}"
-                    Kind="CloseCircleOutline" />
+                    Width="16"
+                    Height="16"
+                    Kind="Close" />
             </Button>
+            <Button
+                x:Name="ValidateButton"
+                Click="Validate_Click"
+                DockPanel.Dock="Right"
+                Style="{StaticResource Button.Secondary}"
+                ToolTip="Skaneeri mudel ja valideeri kõik hallatavad avad (F5)">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Refresh" Style="{StaticResource ButtonIconLabel}" />
+                    <TextBlock Text="Valideeri" />
+                </StackPanel>
+            </Button>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Style="{StaticResource Type.Title}" Text="Avade haldur" />
+                <TextBlock
+                    x:Name="SummaryText"
+                    Margin="0,2,0,0"
+                    Style="{StaticResource Type.Secondary}"
+                    Text="Vajuta „Valideeri“, et laadida avad."
+                    TextTrimming="CharacterEllipsis"
+                    TextWrapping="NoWrap" />
+            </StackPanel>
+        </DockPanel>
+
+        <!--  Search  -->
+        <Grid Grid.Row="1" Margin="{StaticResource Gap.Bottom.S}">
+            <TextBox
+                x:Name="SearchBox"
+                Padding="30,0,8,0"
+                AutomationProperties.Name="Search openings"
+                Style="{StaticResource Input.Text}"
+                Tag="Otsi ava, allikat, alust, korrust…"
+                TextChanged="SearchBox_TextChanged" />
+            <materialDesign:PackIcon
+                Width="16"
+                Height="16"
+                Margin="10,0,0,0"
+                VerticalAlignment="Center"
+                Foreground="{DynamicResource Text.Tertiary}"
+                IsHitTestVisible="False"
+                Kind="Magnify" />
         </Grid>
 
-        <!--  Search + filters (MaterialDesign Card)  -->
-        <materialDesign:Card
-            Grid.Row="1"
-            Padding="8,6"
-            Background="{DynamicResource SecondaryBackgroundBrush}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="8" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
-                <!--  Search + validate row  -->
-                <Grid Grid.Row="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <Grid Grid.Column="0" Height="26">
-                        <TextBox
-                            x:Name="SearchBox"
-                            Padding="6,0"
-                            HorizontalAlignment="Stretch"
-                            VerticalContentAlignment="Center"
-                            FontSize="12"
-                            Style="{StaticResource CustomTextBoxStyle}"
-                            TextChanged="SearchBox_TextChanged" />
-                        <TextBlock
-                            Margin="8,0"
-                            VerticalAlignment="Center"
-                            FontSize="12"
-                            Foreground="{DynamicResource IconForegroundBrush}"
-                            IsHitTestVisible="False"
-                            Text="Otsi ava, allikat, alust, korrust...">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </Grid>
-
-                    <StackPanel
-                        Grid.Column="1"
-                        Margin="10,0,0,0"
-                        Orientation="Horizontal">
-                        <Button
-                            x:Name="ValidateButton"
-                            Width="110"
-                            Height="26"
-                            Click="Validate_Click"
-                            Content="Valideeri"
-                            FontSize="12"
-                            Style="{StaticResource CustomActionButtonStyle}"
-                            ToolTip="Skaneeri mudel ja valideeri kõik hallatavad avad" />
-                    </StackPanel>
-                </Grid>
-
-                <Separator Grid.Row="1" Opacity="0.2" />
-
-                <!--  Filter chips  -->
-                <WrapPanel Grid.Row="2" Orientation="Horizontal">
-                    <ToggleButton
-                        x:Name="ChipAll"
-                        Click="Chip_Click"
-                        Content="Kõik"
-                        IsChecked="True"
-                        Style="{StaticResource FilterChipStyle}"
-                        Tag="All" />
-                    <ToggleButton
-                        Click="Chip_Click"
-                        Content="Vertikaalne"
-                        Style="{StaticResource FilterChipStyle}"
-                        Tag="Vertical" />
-                    <ToggleButton
-                        Click="Chip_Click"
-                        Content="Horisontaalne"
-                        Style="{StaticResource FilterChipStyle}"
-                        Tag="Horizontal" />
-                    <ToggleButton
-                        Click="Chip_Click"
-                        Content="Joondatud"
-                        Style="{StaticResource FilterChipStyle}"
-                        Tag="Aligned" />
-                    <ToggleButton
-                        Click="Chip_Click"
-                        Content="Joondamata"
-                        Style="{StaticResource FilterChipStyle}"
-                        Tag="NotAligned" />
-                    <ToggleButton
-                        Click="Chip_Click"
-                        Content="Vajab ülevaatust"
-                        Style="{StaticResource FilterChipStyle}"
-                        Tag="NeedsReview" />
-                    <ToggleButton
-                        Click="Chip_Click"
-                        Content="Lubatud"
-                        Style="{StaticResource FilterChipStyle}"
-                        Tag="Allowed" />
-                    <ToggleButton
-                        Click="Chip_Click"
-                        Content="Puudub"
-                        Style="{StaticResource FilterChipStyle}"
-                        Tag="Missing" />
-                </WrapPanel>
-            </Grid>
-        </materialDesign:Card>
-
-        <!--  Openings list (MaterialDesign Card)  -->
-        <materialDesign:Card
+        <!--  Filter chips (single choice)  -->
+        <WrapPanel
+            x:Name="ChipPanel"
             Grid.Row="2"
-            Margin="0,10,0,0"
-            Padding="5"
-            Background="{DynamicResource SecondaryBackgroundBrush}">
-            <DataGrid
-                x:Name="ItemsGrid"
-                AutoGenerateColumns="False"
-                Background="Transparent"
-                BorderThickness="0"
-                CanUserAddRows="False"
-                CanUserDeleteRows="False"
-                CanUserResizeRows="False"
-                CellStyle="{StaticResource ManagerCellStyle}"
-                ColumnHeaderStyle="{StaticResource CustomDataGridColumnHeaderStyle}"
-                EnableRowVirtualization="True"
-                FontSize="11"
-                Foreground="{DynamicResource ForegroundBrush}"
-                GridLinesVisibility="None"
-                HeadersVisibility="Column"
-                HorizontalScrollBarVisibility="Auto"
-                IsReadOnly="True"
-                MouseDoubleClick="ItemsGrid_MouseDoubleClick"
-                RowHeaderWidth="0"
-                RowStyle="{StaticResource ManagerRowStyle}"
-                SelectionChanged="ItemsGrid_SelectionChanged"
-                SelectionMode="Extended"
-                SelectionUnit="FullRow"
-                VerticalScrollBarVisibility="Auto">
-                <DataGrid.Columns>
+            Margin="0,2,0,6"
+            AutomationProperties.Name="Filter">
+            <RadioButton
+                x:Name="ChipAll"
+                Checked="Chip_Checked"
+                Content="Kõik"
+                GroupName="OpeningFilter"
+                IsChecked="True"
+                Style="{StaticResource Chip}"
+                Tag="All" />
+            <RadioButton
+                Checked="Chip_Checked"
+                Content="Vajab ülevaatust"
+                GroupName="OpeningFilter"
+                Style="{StaticResource Chip}"
+                Tag="NeedsReview" />
+            <RadioButton
+                Checked="Chip_Checked"
+                Content="Joondamata"
+                GroupName="OpeningFilter"
+                Style="{StaticResource Chip}"
+                Tag="NotAligned" />
+            <RadioButton
+                Checked="Chip_Checked"
+                Content="Puudub"
+                GroupName="OpeningFilter"
+                Style="{StaticResource Chip}"
+                Tag="Missing" />
+            <RadioButton
+                Checked="Chip_Checked"
+                Content="Joondatud"
+                GroupName="OpeningFilter"
+                Style="{StaticResource Chip}"
+                Tag="Aligned" />
+            <RadioButton
+                Checked="Chip_Checked"
+                Content="Lubatud"
+                GroupName="OpeningFilter"
+                Style="{StaticResource Chip}"
+                Tag="Allowed" />
+            <Border
+                Width="1"
+                Height="16"
+                Margin="4,0,10,6"
+                VerticalAlignment="Center"
+                Background="{DynamicResource Separator}" />
+            <RadioButton
+                Checked="Chip_Checked"
+                Content="Vertikaalne"
+                GroupName="OpeningFilter"
+                Style="{StaticResource Chip}"
+                Tag="Vertical" />
+            <RadioButton
+                Checked="Chip_Checked"
+                Content="Horisontaalne"
+                GroupName="OpeningFilter"
+                Style="{StaticResource Chip}"
+                Tag="Horizontal" />
+        </WrapPanel>
 
-                    <!--  Status  -->
-                    <DataGridTemplateColumn Width="120" Header="Staatus">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal" ToolTip="{Binding NotesText}">
-                                    <Ellipse
-                                        Width="9"
-                                        Height="9"
-                                        Margin="0,0,6,0"
-                                        VerticalAlignment="Center"
-                                        Fill="{Binding StatusColor}" />
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        FontSize="11"
-                                        Foreground="{DynamicResource ForegroundBrush}"
-                                        Text="{Binding StatusText}"
-                                        TextTrimming="CharacterEllipsis" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+        <!--  Openings list  -->
+        <Border Grid.Row="3" Style="{StaticResource Surface}">
+            <Grid>
+                <DataGrid
+                    x:Name="ItemsGrid"
+                    Padding="0,4"
+                    AutomationProperties.Name="Managed openings"
+                    MouseDoubleClick="ItemsGrid_MouseDoubleClick"
+                    SelectionChanged="ItemsGrid_SelectionChanged"
+                    SelectionMode="Extended"
+                    Style="{StaticResource TableGrid}">
+                    <DataGrid.Columns>
+                        <!--  Status: glyph + word (never colour alone)  -->
+                        <DataGridTemplateColumn
+                            Width="172"
+                            Header="Staatus"
+                            SortMemberPath="StatusText">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <DockPanel ToolTip="{Binding NotesText}">
+                                        <materialDesign:PackIcon Style="{StaticResource StatusIcon}" />
+                                        <TextBlock Style="{StaticResource StatusText}" Text="{Binding StatusText}" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                    <!--  Source  -->
-                    <DataGridTemplateColumn Width="*" MinWidth="105" Header="Allikas">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Vertical" ToolTip="{Binding SourceTypeName}">
-                                    <TextBlock
-                                        FontSize="11"
-                                        Foreground="{DynamicResource ForegroundBrush}"
-                                        Text="{Binding SourceDisplayName}"
-                                        TextTrimming="CharacterEllipsis" />
-                                    <TextBlock
-                                        FontSize="9.5"
-                                        Foreground="{DynamicResource IconForegroundBrush}"
-                                        Text="{Binding SourceCategory}"
-                                        TextTrimming="CharacterEllipsis" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                        <DataGridTemplateColumn
+                            Width="*"
+                            MinWidth="110"
+                            Header="Allikas"
+                            SortMemberPath="SourceDisplayName">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,4" ToolTip="{Binding SourceTypeName}">
+                                        <TextBlock Style="{StaticResource CellPrimary}" Text="{Binding SourceDisplayName}" />
+                                        <TextBlock Style="{StaticResource CellCaption}" Text="{Binding SourceCategory}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                    <!--  Host  -->
-                    <DataGridTemplateColumn Width="*" MinWidth="105" Header="Alus">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Vertical" ToolTip="{Binding HostCategory}">
-                                    <TextBlock
-                                        FontSize="11"
-                                        Foreground="{DynamicResource ForegroundBrush}"
-                                        Text="{Binding HostDisplayName}"
-                                        TextTrimming="CharacterEllipsis" />
-                                    <TextBlock
-                                        FontSize="9.5"
-                                        Foreground="{DynamicResource IconForegroundBrush}"
-                                        Text="{Binding HostModelName}"
-                                        TextTrimming="CharacterEllipsis" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                        <DataGridTemplateColumn
+                            Width="*"
+                            MinWidth="110"
+                            Header="Alus"
+                            SortMemberPath="HostDisplayName">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,4" ToolTip="{Binding HostCategory}">
+                                        <TextBlock Style="{StaticResource CellPrimary}" Text="{Binding HostDisplayName}" />
+                                        <TextBlock Style="{StaticResource CellCaption}" Text="{Binding HostModelName}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                    <!--  Opening type  -->
-                    <DataGridTemplateColumn Width="*" MinWidth="90" Header="Ava tüüp">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Vertical" ToolTip="{Binding OpeningFamilyName}">
-                                    <TextBlock
-                                        FontSize="11"
-                                        Foreground="{DynamicResource ForegroundBrush}"
-                                        Text="{Binding OpeningTypeName}"
-                                        TextTrimming="CharacterEllipsis" />
-                                    <TextBlock
-                                        FontSize="9.5"
-                                        Foreground="{DynamicResource IconForegroundBrush}"
-                                        Text="{Binding OrientationText}" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                        <DataGridTemplateColumn
+                            Width="*"
+                            MinWidth="96"
+                            Header="Ava"
+                            SortMemberPath="OpeningTypeName">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,4" ToolTip="{Binding OpeningFamilyName}">
+                                        <TextBlock Style="{StaticResource CellPrimary}" Text="{Binding OpeningTypeName}" />
+                                        <TextBlock Style="{StaticResource CellCaption}">
+                                            <Run Text="{Binding SizeText, Mode=OneWay}" />
+                                            <Run Text="{Binding OrientationText, Mode=OneWay, StringFormat=' · {0}'}" />
+                                        </TextBlock>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                    <!--  Size  -->
-                    <DataGridTextColumn
-                        Width="78"
-                        Binding="{Binding SizeText}"
-                        Header="Mõõdud (mm)" />
+                        <DataGridTextColumn
+                            Width="76"
+                            Binding="{Binding OffsetText}"
+                            Header="Nihe"
+                            SortMemberPath="OffsetMm" />
 
-                    <!--  Offset  -->
-                    <DataGridTextColumn
-                        Width="56"
-                        Binding="{Binding OffsetText}"
-                        Header="Nihe" />
+                        <DataGridTextColumn
+                            Width="76"
+                            Binding="{Binding LevelName}"
+                            Header="Korrus" />
 
-                    <!--  Level  -->
-                    <DataGridTextColumn
-                        Width="66"
-                        Binding="{Binding LevelName}"
-                        Header="Korrus" />
+                        <!--  Row actions: the frequent two, the rest in "…"  -->
+                        <DataGridTemplateColumn Width="100" CanUserResize="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                        <Button
+                                            AutomationProperties.Name="Go to opening"
+                                            Click="GoTo_Click"
+                                            Style="{StaticResource Button.Icon}"
+                                            ToolTip="Mine ava juurde">
+                                            <materialDesign:PackIcon
+                                                Width="16"
+                                                Height="16"
+                                                Kind="CrosshairsGps" />
+                                        </Button>
+                                        <Button
+                                            AutomationProperties.Name="Fix opening"
+                                            Click="Fix_Click"
+                                            IsEnabled="{Binding CanFix}"
+                                            Style="{StaticResource Button.Icon}"
+                                            ToolTip="Paranda / uuenda ava">
+                                            <materialDesign:PackIcon
+                                                Width="16"
+                                                Height="16"
+                                                Kind="AutoFix" />
+                                        </Button>
+                                        <Button
+                                            AutomationProperties.Name="More actions"
+                                            Click="More_Click"
+                                            Style="{StaticResource Button.Icon}"
+                                            ToolTip="Rohkem tegevusi">
+                                            <materialDesign:PackIcon
+                                                Width="16"
+                                                Height="16"
+                                                Kind="DotsHorizontal" />
+                                            <Button.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Click="SelectOpening_Click" Header="Vali ava">
+                                                        <MenuItem.Icon>
+                                                            <materialDesign:PackIcon Kind="CursorDefaultOutline" Style="{StaticResource MenuIcon}" />
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Click="SelectSource_Click" Header="Vali allikas">
+                                                        <MenuItem.Icon>
+                                                            <materialDesign:PackIcon Kind="SelectSearch" Style="{StaticResource MenuIcon}" />
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Click="HighlightPair_Click" Header="Näita paari (ava + allikas + alus)">
+                                                        <MenuItem.Icon>
+                                                            <materialDesign:PackIcon Kind="EyeOutline" Style="{StaticResource MenuIcon}" />
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <Separator Style="{StaticResource MenuSeparator}" />
+                                                    <MenuItem
+                                                        Click="MarkAllowed_Click"
+                                                        Header="Märgi lubatuks…"
+                                                        Visibility="{Binding IsAllowedInverse, Converter={StaticResource BoolToVis}}">
+                                                        <MenuItem.Icon>
+                                                            <materialDesign:PackIcon Kind="ShieldCheckOutline" Style="{StaticResource MenuIcon}" />
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem
+                                                        Click="ClearAllowed_Click"
+                                                        Header="Eemalda lubatud märge"
+                                                        Visibility="{Binding IsAllowed, Converter={StaticResource BoolToVis}}">
+                                                        <MenuItem.Icon>
+                                                            <materialDesign:PackIcon Kind="ShieldOffOutline" Style="{StaticResource MenuIcon}" />
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Click="Unlink_Click" Header="Eemalda seos…">
+                                                        <MenuItem.Icon>
+                                                            <materialDesign:PackIcon Kind="LinkOff" Style="{StaticResource MenuIcon}" />
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <Separator Style="{StaticResource MenuSeparator}" />
+                                                    <MenuItem
+                                                        Click="DeleteOpening_Click"
+                                                        Foreground="{DynamicResource Status.Error}"
+                                                        Header="Kustuta ava…">
+                                                        <MenuItem.Icon>
+                                                            <materialDesign:PackIcon Kind="DeleteOutline" Style="{StaticResource MenuIcon}" />
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                </ContextMenu>
+                                            </Button.ContextMenu>
+                                        </Button>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
 
-                    <!--  Row actions  -->
-                    <DataGridTemplateColumn
-                        Width="215"
-                        CanUserResize="False"
-                        Header="Tegevused">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <Button
-                                        Click="GoTo_Click"
-                                        Style="{StaticResource RowIconButtonStyle}"
-                                        ToolTip="Mine ava juurde">
-                                        <materialDesign:PackIcon
-                                            Width="16"
-                                            Height="16"
-                                            Foreground="{DynamicResource IconBrush}"
-                                            Kind="CrosshairsGps" />
-                                    </Button>
-                                    <Button
-                                        Click="SelectOpening_Click"
-                                        Style="{StaticResource RowIconButtonStyle}"
-                                        ToolTip="Vali ava">
-                                        <materialDesign:PackIcon
-                                            Width="16"
-                                            Height="16"
-                                            Foreground="{DynamicResource IconBrush}"
-                                            Kind="CursorDefault" />
-                                    </Button>
-                                    <Button
-                                        Click="SelectSource_Click"
-                                        Style="{StaticResource RowIconButtonStyle}"
-                                        ToolTip="Vali allikas">
-                                        <materialDesign:PackIcon
-                                            Width="16"
-                                            Height="16"
-                                            Foreground="{DynamicResource IconBrush}"
-                                            Kind="Magnify" />
-                                    </Button>
-                                    <Button
-                                        Click="HighlightPair_Click"
-                                        Style="{StaticResource RowIconButtonStyle}"
-                                        ToolTip="Näita paari (ava + allikas + alus)">
-                                        <materialDesign:PackIcon
-                                            Width="16"
-                                            Height="16"
-                                            Foreground="{DynamicResource IconBrush}"
-                                            Kind="EyeOutline" />
-                                    </Button>
-                                    <Button
-                                        Click="Fix_Click"
-                                        IsEnabled="{Binding CanFix}"
-                                        Style="{StaticResource RowIconButtonStyle}"
-                                        ToolTip="Paranda / uuenda ava">
-                                        <materialDesign:PackIcon
-                                            Width="16"
-                                            Height="16"
-                                            Foreground="{DynamicResource IconBrush}"
-                                            Kind="Wrench" />
-                                    </Button>
-                                    <Button
-                                        Click="MarkAllowed_Click"
-                                        Style="{StaticResource RowIconButtonStyle}"
-                                        ToolTip="Märgi lubatuks">
-                                        <Button.Visibility>
-                                            <Binding Converter="{StaticResource BoolToVis}" Path="IsAllowedInverse" />
-                                        </Button.Visibility>
-                                        <materialDesign:PackIcon
-                                            Width="16"
-                                            Height="16"
-                                            Foreground="{DynamicResource IconBrush}"
-                                            Kind="ShieldCheckOutline" />
-                                    </Button>
-                                    <Button
-                                        Click="ClearAllowed_Click"
-                                        Style="{StaticResource RowIconButtonStyle}"
-                                        ToolTip="Eemalda lubatud märge"
-                                        Visibility="{Binding IsAllowed, Converter={StaticResource BoolToVis}}">
-                                        <materialDesign:PackIcon
-                                            Width="16"
-                                            Height="16"
-                                            Foreground="{DynamicResource IconBrush}"
-                                            Kind="ShieldOffOutline" />
-                                    </Button>
-                                    <Button
-                                        Click="Unlink_Click"
-                                        Style="{StaticResource RowIconButtonStyle}"
-                                        ToolTip="Eemalda seos (ava jääb alles)">
-                                        <materialDesign:PackIcon
-                                            Width="16"
-                                            Height="16"
-                                            Foreground="{DynamicResource IconBrush}"
-                                            Kind="LinkOff" />
-                                    </Button>
-                                    <Button
-                                        Click="DeleteOpening_Click"
-                                        Style="{StaticResource RowIconButtonStyle}"
-                                        ToolTip="Kustuta ava">
-                                        <materialDesign:PackIcon
-                                            Width="16"
-                                            Height="16"
-                                            Foreground="{DynamicResource IconBrush}"
-                                            Kind="DeleteOutline" />
-                                    </Button>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
-        </materialDesign:Card>
+                <!--  Empty / no-match state: says what to do  -->
+                <StackPanel
+                    x:Name="EmptyState"
+                    Margin="24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                    <materialDesign:PackIcon
+                        x:Name="EmptyIcon"
+                        Width="32"
+                        Height="32"
+                        Margin="0,0,0,10"
+                        HorizontalAlignment="Center"
+                        Foreground="{DynamicResource Text.Tertiary}"
+                        Kind="TableSearch" />
+                    <TextBlock
+                        x:Name="EmptyTitle"
+                        HorizontalAlignment="Center"
+                        Style="{StaticResource Type.Section}"
+                        Text="Avasid pole laaditud" />
+                    <TextBlock
+                        x:Name="EmptyMessage"
+                        MaxWidth="320"
+                        Margin="0,4,0,0"
+                        HorizontalAlignment="Center"
+                        Style="{StaticResource Type.Secondary}"
+                        Text="Vajuta „Valideeri“, et mudel läbi vaadata."
+                        TextAlignment="Center" />
+                    <Button
+                        x:Name="EmptyAction"
+                        Margin="0,12,0,0"
+                        HorizontalAlignment="Center"
+                        Click="EmptyAction_Click"
+                        Content="Valideeri"
+                        Style="{StaticResource Button.Secondary}" />
+                </StackPanel>
+            </Grid>
+        </Border>
 
-        <!--  Details / preview (MaterialDesign Card)  -->
-        <materialDesign:Card
-            Grid.Row="3"
-            Margin="0,10,0,0"
-            Padding="8,6"
-            Background="{DynamicResource SecondaryBackgroundBrush}">
+        <!--  Selected opening  -->
+        <Border
+            Grid.Row="4"
+            Margin="{StaticResource Gap.Top.M}"
+            Style="{StaticResource Card}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!--  Alignment schematic preview (click = go to opening)  -->
+                <!--  Alignment schematic (click = go to opening)  -->
                 <Border
-                    Grid.Column="0"
+                    x:Name="PreviewBox"
                     Width="210"
-                    Height="104"
-                    Margin="0,2,10,2"
-                    Background="{DynamicResource PrimaryBackgroundBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
+                    Height="110"
+                    Margin="0,0,16,0"
+                    VerticalAlignment="Top"
+                    Background="{DynamicResource Surface.Inset}"
+                    BorderBrush="{DynamicResource Surface.Stroke}"
                     BorderThickness="1"
-                    CornerRadius="5"
+                    CornerRadius="8"
                     Cursor="Hand"
                     MouseLeftButtonUp="Preview_MouseLeftButtonUp"
                     ToolTip="Kliki, et liikuda ava juurde mudelis">
                     <Canvas
                         x:Name="PreviewCanvas"
-                        ClipToBounds="True"
-                        Background="Transparent" />
+                        Background="Transparent"
+                        ClipToBounds="True" />
                 </Border>
 
-                <!--  Selected item info  -->
-                <StackPanel
+                <TextBlock
+                    x:Name="DetailsPlaceholder"
                     Grid.Column="1"
-                    Margin="0,2,10,0"
-                    VerticalAlignment="Top">
-                    <TextBlock
-                        FontSize="12"
-                        FontWeight="SemiBold"
-                        Foreground="{DynamicResource ForegroundBrush}"
-                        Text="Valitud ava" />
-                    <Separator Margin="0,2,0,4" Opacity="0.2" />
-                    <TextBlock
-                        x:Name="DetailLine1"
-                        FontSize="11"
-                        Foreground="{DynamicResource ForegroundBrush}"
-                        Text="–"
-                        TextTrimming="CharacterEllipsis" />
-                    <TextBlock
-                        x:Name="DetailLine2"
-                        FontSize="11"
-                        Foreground="{DynamicResource ForegroundBrush}"
-                        Text=""
-                        TextTrimming="CharacterEllipsis" />
-                    <TextBlock
-                        x:Name="DetailLine3"
-                        FontSize="11"
-                        Foreground="{DynamicResource ForegroundBrush}"
-                        Text=""
-                        TextTrimming="CharacterEllipsis" />
-                    <TextBlock
-                        x:Name="DetailLine4"
-                        FontSize="11"
-                        Foreground="{DynamicResource ForegroundBrush}"
-                        Text=""
-                        TextTrimming="CharacterEllipsis" />
-                </StackPanel>
+                    VerticalAlignment="Center"
+                    Style="{StaticResource Type.Secondary}"
+                    Text="Vali loendist ava, et näha selle üksikasju." />
 
-                <!--  Notes / allowed reason  -->
-                <StackPanel
-                    Grid.Column="2"
-                    Margin="0,2,0,0"
-                    VerticalAlignment="Top">
+                <Grid x:Name="DetailsGrid" Grid.Column="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Style="{StaticResource DetailLabel}" Text="Allikas" />
                     <TextBlock
-                        FontSize="12"
-                        FontWeight="SemiBold"
-                        Foreground="{DynamicResource ForegroundBrush}"
+                        x:Name="DetailSource"
+                        Grid.Column="1"
+                        Style="{StaticResource DetailValue}" />
+                    <TextBlock
+                        Grid.Row="1"
+                        Style="{StaticResource DetailLabel}"
+                        Text="Alus" />
+                    <TextBlock
+                        x:Name="DetailHost"
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Style="{StaticResource DetailValue}" />
+                    <TextBlock
+                        Grid.Row="2"
+                        Style="{StaticResource DetailLabel}"
+                        Text="Ava" />
+                    <TextBlock
+                        x:Name="DetailOpening"
+                        Grid.Row="2"
+                        Grid.Column="1"
+                        Style="{StaticResource DetailValue}" />
+                    <TextBlock
+                        Grid.Row="3"
+                        Style="{StaticResource DetailLabel}"
+                        Text="Staatus" />
+                    <TextBlock
+                        x:Name="DetailStatus"
+                        Grid.Row="3"
+                        Grid.Column="1"
+                        Style="{StaticResource DetailValue}" />
+                    <TextBlock
+                        x:Name="DetailNotesLabel"
+                        Grid.Row="4"
+                        Style="{StaticResource DetailLabel}"
                         Text="Märkused" />
-                    <Separator Margin="0,2,0,4" Opacity="0.2" />
                     <TextBlock
                         x:Name="DetailNotes"
-                        FontSize="11"
-                        Foreground="{DynamicResource ForegroundBrush}"
-                        Text="–"
-                        TextWrapping="Wrap" />
-                </StackPanel>
+                        Grid.Row="4"
+                        Grid.Column="1"
+                        Style="{StaticResource DetailValue}" />
+                </Grid>
             </Grid>
-        </materialDesign:Card>
+        </Border>
 
-        <!--  Bottom Bar  -->
-        <Grid Grid.Row="4" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <StackPanel
-                Grid.Column="0"
+        <!--  Footer: transient status + bulk fix  -->
+        <DockPanel Grid.Row="5" Margin="{StaticResource Gap.Top.M}">
+            <Button
+                x:Name="FixSelectedButton"
+                Click="FixSelected_Click"
+                DockPanel.Dock="Right"
+                IsEnabled="False"
+                Style="{StaticResource Button.Primary}"
+                ToolTip="Paranda kõik valitud read (kinnitusega)">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="AutoFix" Style="{StaticResource ButtonIconLabel}" />
+                    <TextBlock x:Name="FixSelectedText" Text="Paranda valitud" />
+                </StackPanel>
+            </Button>
+            <TextBlock
+                x:Name="StatusMessageText"
+                Margin="0,0,12,0"
                 VerticalAlignment="Center"
-                Orientation="Horizontal">
-                <TextBlock
-                    x:Name="SummaryText"
-                    VerticalAlignment="Center"
-                    FontSize="11"
-                    Foreground="{DynamicResource ForegroundBrush}"
-                    Text="Vajuta „Valideeri“, et laadida avad." />
-                <TextBlock
-                    x:Name="StatusMessageText"
-                    Margin="14,0,0,0"
-                    VerticalAlignment="Center"
-                    FontSize="11"
-                    Foreground="{DynamicResource IconForegroundBrush}"
-                    Text=""
-                    TextTrimming="CharacterEllipsis" />
-            </StackPanel>
-
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button
-                    x:Name="FixSelectedButton"
-                    Width="140"
-                    Height="30"
-                    Click="FixSelected_Click"
-                    Content="Paranda valitud"
-                    FontSize="12"
-                    Style="{StaticResource CustomActionButtonStyle}"
-                    ToolTip="Paranda kõik valitud read (kinnitusega)" />
-            </StackPanel>
-        </Grid>
+                Style="{StaticResource Type.Secondary}"
+                TextTrimming="CharacterEllipsis"
+                TextWrapping="NoWrap" />
+        </DockPanel>
     </Grid>
 </UserControl>

@@ -20,6 +20,15 @@ namespace RedeliAvad
         public ICollection<ElementId> SelectedTrayIds { get; set; }
         public bool UseSelectedOnly { get; set; } = false;
 
+        /// <summary>Inline result/error reporter (the window's result line); falls back to a TaskDialog.</summary>
+        public Action<string, bool> Report { get; set; }
+
+        private void Notify(string text, bool isError)
+        {
+            if (Report != null) Report(text, isError);
+            else TaskDialog.Show("RedeliAvad", text);
+        }
+
         public void Execute(UIApplication app)
         {
             if (UiDoc == null || SelectedLink == null || Symbol == null) return;
@@ -28,7 +37,7 @@ namespace RedeliAvad
             var linkDoc = SelectedLink.GetLinkDocument();
             if (linkDoc == null)
             {
-                TaskDialog.Show("RedeliAvad", "Selected link is not loaded.");
+                Notify("Valitud lingitud mudel ei ole laaditud.", true);
                 return;
             }
 
@@ -66,8 +75,7 @@ namespace RedeliAvad
 
             if (traySolids.Count == 0)
             {
-                TaskDialog.Show("RedeliAvad",
-                    UseSelectedOnly ? "Valikust ei leitud kaablirenne/ühendusi." : "Põhifailis kaablirenne ei leitud.");
+                Notify(UseSelectedOnly ? "Valikust ei leitud kaablirenne ega -ühendusi." : "Põhifailis kaablirenne ei leitud.", true);
                 // Reset the flag so a next run (all) still works
                 UseSelectedOnly = false;
                 SelectedTrayIds = null;
@@ -110,7 +118,7 @@ namespace RedeliAvad
 
             if (hostSolids.Count == 0)
             {
-                TaskDialog.Show("RedeliAvad", "No usable wall/framing solids found in link.");
+                Notify("Lingitud mudelist ei leitud kasutatavaid seinu ega talasid.", true);
                 return;
             }
 
@@ -240,17 +248,15 @@ namespace RedeliAvad
             // Final report
             if (placed == 0)
             {
-                TaskDialog.Show("RedeliAvad",
-                    duplicates > 0
-                        ? $"No new instances placed.\nSkipped {duplicates} duplicate location(s)."
-                        : "No intersections found.");
+                Notify(duplicates > 0
+                        ? $"Uusi avasid ei loodud – {duplicates} duplikaatkohta jäeti vahele."
+                        : "Ristumisi ei leitud.", false);
             }
             else
             {
-                TaskDialog.Show("RedeliAvad",
-                    duplicates > 0
-                        ? $"Placed {placed} instance(s).\nSkipped {duplicates} duplicate location(s)."
-                        : $"Placed {placed} instance(s).");
+                Notify(duplicates > 0
+                        ? $"Loodud {placed} ava – {duplicates} duplikaatkohta jäeti vahele."
+                        : $"Loodud {placed} ava.", false);
             }
         }
 

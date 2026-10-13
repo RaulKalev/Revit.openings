@@ -12,6 +12,15 @@ namespace RedeliAvad
         public ElementId ExplicitId { get; set; } = null;  // if set, go to this id
         public double Padding { get; set; } = UnitUtils.ConvertToInternalUnits(400, UnitTypeId.Millimeters); // section padding
 
+        /// <summary>Inline result/error reporter (the window's result line); falls back to a TaskDialog.</summary>
+        public Action<string, bool> Report { get; set; }
+
+        private void Notify(string text, bool isError)
+        {
+            if (Report != null) Report(text, isError);
+            else TaskDialog.Show("RedeliAvad", text);
+        }
+
         public void Execute(UIApplication app)
         {
             var uiDoc = UiDoc ?? app.ActiveUIDocument;
@@ -28,7 +37,7 @@ namespace RedeliAvad
                 var count = TempMemory.CreatedIds.Count;
                 if (count == 0)
                 {
-                    TaskDialog.Show("RedeliAvad", "Ava elemente pole vahemälus, palun loo kõigepealt avad.");
+                    Notify("Selle seansi jooksul pole avasid loodud – loo kõigepealt avad.", false);
                     return;
                 }
 
@@ -41,7 +50,7 @@ namespace RedeliAvad
             var el = doc.GetElement(targetId);
             if (el == null)
             {
-                TaskDialog.Show("RedeliAvad", "Element not found.");
+                Notify("Ava elementi ei leitud.", true);
                 return;
             }
 
@@ -57,7 +66,7 @@ namespace RedeliAvad
                 if (bb == null)
                 {
                     t.RollBack();
-                    TaskDialog.Show("RedeliAvad", "Element has no bounding box.");
+                    Notify("Ava elemendil puudub ruumiline ulatus.", true);
                     return;
                 }
 

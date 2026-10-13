@@ -18,7 +18,7 @@ namespace RedeliAvad
         Error
     }
 
-    /// <summary>Coarse severity used for row colouring in the manager UI.</summary>
+    /// <summary>Coarse severity: drives the status glyph and colour in the manager UI.</summary>
     public enum OpeningStatusSeverity
     {
         Ok,
@@ -27,7 +27,7 @@ namespace RedeliAvad
         Error
     }
 
-    /// <summary>Display helpers (Estonian UI texts + colours matching the existing accent palette).</summary>
+    /// <summary>Display helpers (Estonian UI texts + severity; colours come from the palette Status.* keys).</summary>
     public static class OpeningStatusInfo
     {
         public static string GetText(OpeningStatus status)
@@ -64,18 +64,6 @@ namespace RedeliAvad
                 case OpeningStatus.ShapeMismatch:
                 case OpeningStatus.NotAligned: return OpeningStatusSeverity.Warning;
                 default: return OpeningStatusSeverity.Error; // Missing*, Error
-            }
-        }
-
-        /// <summary>Hex colour per severity; matches the accent colours already used by the title bar buttons.</summary>
-        public static string GetColorHex(OpeningStatus status)
-        {
-            switch (GetSeverity(status))
-            {
-                case OpeningStatusSeverity.Ok: return "#20C997";      // green (minimize hover)
-                case OpeningStatusSeverity.Info: return "#0078D7";    // blue (TextHighlightColor)
-                case OpeningStatusSeverity.Warning: return "#E0A800"; // amber
-                default: return "#DC6B6B";                            // red (close hover)
             }
         }
     }
